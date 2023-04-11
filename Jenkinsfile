@@ -2,10 +2,11 @@ pipeline {
   agent any
 
   environment {
-    NAME = "planets"
+    NAME = "solar-system"
     VERSION = "${env.BUILD_ID}-${env.GIT_COMMIT}"
-    IMAGE_REPO = "siddharth67"
+    IMAGE_REPO = "kaveh61"
     GIT_TOKEN = credentials('github-token')
+    ARGOCD_TOKEN = credentials('argocd-token')
   }
   
   stages {
@@ -34,17 +35,17 @@ pipeline {
     stage('Clone/Pull Repo') {
       steps {
         script {
-          if (fileExists('test-cd')) {
+          if (fileExists('gitops-argocd')) {
 
             echo 'Cloned repo already exists - Pulling latest changes'
 
-            dir("test-cd") {
+            dir("gitops-argocd") {
               sh 'git pull'
             }
 
           } else {
             echo 'Repo does not exists - Cloning the repo'
-            sh 'git clone -b feature https://github.com/sidd-harth/test-cd.git'
+            sh 'git clone -b feature https://github.com/kaveh6161/gitops-argocd.git'
           }
         }
       }
@@ -53,9 +54,9 @@ pipeline {
     stage('Update Manifest') {
 
       steps {
-        dir("test-cd/jenkins-demo") {
-          sh "git config --global user.email 'ci@ci.com'"
-          sh 'sed -i "s#siddharth67.*#${IMAGE_REPO}/${NAME}:${VERSION}#g" deployment.yaml'
+        dir("gitops-argocd/jenkins-demo") {
+          sh "git config --global user.email 'kaveh@example.com'"
+          sh 'sed -i "s#kaveh61.*#${IMAGE_REPO}/${NAME}:${VERSION}#g" deployment.yaml'
           sh 'cat deployment.yaml'
         }
       }
@@ -65,7 +66,7 @@ pipeline {
 
       steps {
         dir("test-cd/jenkins-demo") {
-          sh 'git remote set-url origin https://$GIT_TOKEN@github.com/sidd-harth/test-cd.git'
+          sh 'git remote set-url origin https://$GIT_TOKEN@github.com/kaveh6161/gitops-argocd.git'
           sh 'git checkout feature'
           sh 'git add -A'
           sh 'git commit -am "Updated new image version for VERSION - $VERSION"'
@@ -77,7 +78,7 @@ pipeline {
     stage('Raise PR') {
 
       steps {
-        dir("test-cd/jenkins-demo") {
+        dir("gitops-argocd/jenkins-demo") {
           sh 'gh auth login -h github.com  -p https --with-token < /home/devsecops/token.txt'
           sh 'gh auth status'
           sh 'gh pr create -a @me --title "Updated Image Version - $VERSION" --body "Planets Updated in Solar System - $VERSION"  -B main'
