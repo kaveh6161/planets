@@ -65,7 +65,7 @@ pipeline {
     stage('Commit & Push') {
 
       steps {
-        dir("test-cd/jenkins-demo") {
+        dir("gitops-argocd/jenkins-demo") {
           sh 'git remote set-url origin https://$GIT_TOKEN@github.com/kaveh6161/gitops-argocd.git'
           sh 'git checkout feature'
           sh 'git add -A'
